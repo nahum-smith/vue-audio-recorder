@@ -184,14 +184,13 @@
 <template>
   <div class="ar">
     <div class="ar__overlay" v-if="isUploading"></div>
-
-    <div class="ar-spinner" v-if="isUploading">
+    <div class="ar-spinner" v-if="isUploading || isEncoding">
       <div class="ar-spinner__dot"></div>
       <div class="ar-spinner__dot"></div>
       <div class="ar-spinner__dot"></div>
     </div>
 
-    <div class="ar-content" :class="{'ar__blur': isUploading}">
+    <div class="ar-content" :class="{'ar__blur': isUploading || isEncoding}">
       <div class="ar-recorder">
         <icon-button
           class="ar-icon ar-icon__lg"
@@ -279,8 +278,9 @@
     data () {
       return {
         isUploading     : false,
+        isEncoding      : false,
         recorder        : this._initRecorder(),
-        recordList      : [{id: 1, duration: '03:00'},{id: 2, duration: '11:00'}],
+        recordList      : [],
         selected        : {},
         uploadStatus    : null,
       }
@@ -300,6 +300,14 @@
         this.isUploading = false
         this.uploadStatus = status
         setTimeout(() => {this.uploadStatus = null}, 1500)
+      })
+
+      this.$eventBus.$on('start-encoding', () => {
+        this.isEncoding = true
+      })
+
+      this.$eventBus.$on('stop-encoding', () => {
+        this.isEncoding = false
       })
     },
     beforeDestroy () {

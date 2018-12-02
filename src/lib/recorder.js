@@ -20,9 +20,18 @@ export default class {
   }
 
   start () {
-    navigator.mediaDevices.getUserMedia({audio: true})
-                          .then(this._micCaptured.bind(this))
-                          .catch(this._micError.bind(this))
+    let constraints = {
+      video: false,
+      audio: {
+        channelCount: 1,
+        echoCancellation: false
+      }
+    }
+
+    navigator.mediaDevices
+             .getUserMedia(constraints)
+             .then(this._micCaptured.bind(this))
+             .catch(this._micError.bind(this))
     this.isPause     = false
     this.isRecording = true
   }

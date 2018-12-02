@@ -12,6 +12,7 @@
 
 <script>
   import IconButton from './icon-button'
+  import { wav2mp3 } from '@/lib/utils'
 
   export default {
     props: {
@@ -26,10 +27,16 @@
         if (!this.record.url) {
           return
         }
+
         let link = document.createElement('a')
-        link.href = this.record.url
-        link.download = this.filename
-        link.click()
+        this.$eventBus.$emit('start-encoding')
+        new Response(this.record.blob).arrayBuffer().then((buffer) => {
+          let mp3 = wav2mp3(buffer)
+          this.$eventBus.$emit('stop-encoding')
+          link.href = window.URL.createObjectURL(mp3)
+          link.download = `${this.filename}.${mp3.type.split('/')[1]}`
+          link.click()
+        })
       }
     }
   }

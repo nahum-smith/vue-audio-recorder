@@ -9,6 +9,7 @@
 <script>
   import IconButton from './icon-button'
   import UploaderPropsMixin from '@/mixins/uploader-props'
+  import { wav2mp3 } from '@/lib/utils'
 
   export default {
     mixins: [UploaderPropsMixin],
@@ -24,28 +25,25 @@
           return
         }
 
-        let blob = this.record.blob
-
-        this.$eventBus.$emit('start-upload')
-
         this.startUpload && this.startUpload()
+        this.$eventBus.$emit('start-upload')
+        this.$eventBus.$emit('start-encoding')
+        new Response(this.record.blob).arrayBuffer().then((buffer) => {
+          let mp3 = wav2mp3(buffer)
+          let data = new FormData()
+          this.$eventBus.$emit('stop-encoding')
+          data.append('audio', mp3, `${this.filename}.${mp3.type.split('/')[1]}`)
 
-        if (this.blobHandler) {
-          blob = this.blobHandler(blob)
-        }
+          let headers = Object.assign(this.headers, {})
+          headers['Content-Type'] = `multipart/form-data; boundary=${data._boundary}`
 
-        let data = new FormData()
-        data.append('audio', blob, this.filename)
-
-        let headers = Object.assign(this.headers, {})
-        headers['Content-Type'] = `multipart/form-data; boundary=${data._boundary}`
-
-        this.$http.post(this.uploadUrl, data, { headers: headers }).then(resp => {
-          this.$eventBus.$emit('end-upload', 'success')
-          this.successfulUpload && this.successfulUpload(resp)
-        }).catch(error => {
-          this.$eventBus.$emit('end-upload', 'fail')
-          this.failedUpload && this.failedUpload(error)
+          this.$http.post(this.uploadUrl, data, { headers: headers }).then(resp => {
+            this.$eventBus.$emit('end-upload', 'success')
+            this.successfulUpload && this.successfulUpload(resp)
+          }).catch(error => {
+            this.$eventBus.$emit('end-upload', 'fail')
+            this.failedUpload && this.failedUpload(error)
+          })
         })
       }
     }
