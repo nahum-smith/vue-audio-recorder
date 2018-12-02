@@ -35,7 +35,9 @@ export function wav2mp3(buffer) {
 
   for (let i = 0; maxSamples <= remaining; i += maxSamples) {
 
-    console.debug(maxSamples, remaining)
+    let pct = Math.round(100 - (remaining * 100 / samples.length))
+
+    console.debug(`${pct}%`)
 
     let mono = samples.subarray(i, i + maxSamples)
     let buf = mp3enc.encodeBuffer(mono)
