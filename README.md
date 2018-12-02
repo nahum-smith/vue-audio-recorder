@@ -33,15 +33,18 @@ npm i vue-audio-recorder --save
 | --------------------- | -------- | --------------------------------------------------------------- |
 | attempts              | Number   | Number of recording attempts                                    |
 | compact               | Boolean  | Hide the download and upload buttons                            |
+| zip                   | Boolean  | To zip a record                                                 |
 | headers               | Object   | HTTP headers                                                    |
 | time                  | Number   | Time limit for the record (minutes)                             |
+| filename              | String   | Download/Upload filename                                        |
 | upload-url            | String   | URL for uploading                                               |
-| start-record          | Function | Fires after click the record button                             |
-| stop-record           | Function | Fires after click the stop button or exceeding the time limit   |
-| start-upload          | Function | Fires after start uploading                                     |
 | attempts-limit        | Function | Fires after exceeding the attempts                              |
+| blobHandler           | Function | Do something with a record                                      |
 | failed-upload         | Function | Fires after a failure uploading                                 |
 | mic-failed            | Function | Fires if your microphone doesn't work                           |
+| start-record          | Function | Fires after click the record button                             |
+| start-upload          | Function | Fires after start uploading                                     |
+| stop-record           | Function | Fires after click the stop button or exceeding the time limit   |
 | successful-upload     | Function | Fires after a successful uploading                              |
 | successful-upload-msg | String   | Displays the message after a successful uploading               |
 | failed-upload-msg     | String   | Displays the message after a failure uploading                  |

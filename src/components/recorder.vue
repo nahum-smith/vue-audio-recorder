@@ -72,7 +72,7 @@
       &__records-limit {
         position: absolute;
         color: #AEAEAE;
-        font-size: 12px;
+        font-size: 13px;
         top: 78px;
       }
     }
@@ -160,6 +160,22 @@
       top: 0;
       color: rgb(244, 120, 90);
     }
+
+    &__downloader,
+    &__uploader {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      margin: auto;
+    }
+
+    &__downloader {
+      right: 115px;
+    }
+
+    &__uploader {
+      right: 85px;
+    }
   }
 
   @import '../scss/icons';
@@ -208,10 +224,28 @@
               @click="removeRecord(idx)">&times;</div>
             <div class="ar__text">Record {{idx + 1}}</div>
             <div class="ar__text">{{record.duration}}</div>
+
+            <downloader
+              v-if="record.id === selected.id"
+              class="ar__downloader"
+              :record="record"
+              :filename="filename"/>
+
+            <uploader
+              v-if="record.id === selected.id"
+              class="ar__uploader"
+              :record="record"
+              :filename="filename"
+              :failed-upload="failedUpload"
+              :headers="headers"
+              :blob-handler="blobHandler"
+              :start-upload="startUpload"
+              :successful-upload="successfulUpload"
+              :upload-url="uploadUrl"/>
         </div>
       </div>
 
-      <audio-player :compact="compact" :record="selected" :uploader-options="uploaderOptions"/>
+      <audio-player :record="selected"/>
 
       <div :class="uploadStatusClasses" v-if="uploadStatus">{{message}}</div>
     </div>
@@ -220,62 +254,44 @@
 
 <script>
   import AudioPlayer from './player'
+  import Downloader  from './downloader'
   import IconButton  from './icon-button'
   import Recorder    from '@/lib/recorder'
+  import Uploader    from './uploader'
+  import UploaderPropsMixin from '@/mixins/uploader-props'
   import { convertTimeMMSS }  from '@/lib/utils'
 
   export default {
+    mixins: [UploaderPropsMixin],
     props: {
       attempts : { type: Number                  },
-      compact  : { type: Boolean, default: false },
       time     : { type: Number                  },
+      zip      : { type: Boolean, default: false },
 
       attemptsLimit : { type: Function },
       micFailed     : { type: Function },
       startRecord   : { type: Function },
       stopRecord    : { type: Function },
 
-      failedUpload     : { type: Function },
-      headers          : { type: Object   },
-      startUpload      : { type: Function },
-      successfulUpload : { type: Function },
-      uploadUrl        : { type: String   },
-
       successfulUploadMsg : { type: String, default: 'Upload successful' },
       failedUploadMsg     : { type: String, default: 'Upload fail'       }
     },
     data () {
       return {
-        isUploading : false,
-        recorder    : new Recorder({
-                        afterStop: () => {
-                          this.recordList = this.recorder.recordList()
-                          if (this.stopRecord) {
-                            this.stopRecord('stop record')
-                          }
-                        },
-                        attempts: this.attempts,
-                        time: this.time
-                      }),
-        recordList      : [],
+        isUploading     : false,
+        recorder        : this._initRecorder(),
+        recordList      : [{id: 1, duration: '03:00'},{id: 2, duration: '11:00'}],
         selected        : {},
         uploadStatus    : null,
-        uploaderOptions : {}
       }
     },
     components: {
       AudioPlayer,
-      IconButton
+      Downloader,
+      IconButton,
+      Uploader
     },
     created () {
-      this.uploaderOptions = {
-        failedUpload     : this.failedUpload,
-        headers          : this.headers,
-        startUpload      : this.startUpload,
-        successfulUpload : this.successfulUpload,
-        uploadUrl        : this.uploadUrl
-      }
-
       this.$eventBus.$on('start-upload', () => {
         this.isUploading = true
       })
@@ -318,11 +334,23 @@
         this.recordList.splice(idx, 1)
         this.$set(this.selected, 'url', null)
         this.$eventBus.$emit('remove-record')
+      },
+      _initRecorder () {
+        return new Recorder({
+          afterStop: () => {
+            this.recordList = this.recorder.recordList()
+            if (this.stopRecord) {
+              this.stopRecord('stop record')
+            }
+          },
+          attempts: this.attempts,
+          time: this.time
+        })
       }
     },
     computed: {
       attemptsLeft () {
-        return this.attempts - this.recorder.records.length
+        return this.attempts - this.recordList.length
       },
       iconButtonType () {
         return this.isRecording && this.isPause ? 'mic' : this.isRecording ? 'pause' : 'mic'
